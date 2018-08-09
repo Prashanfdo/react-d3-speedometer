@@ -48,196 +48,196 @@ import {
 } from 'd3';
 
 class ReactSpeedometer extends React.Component {
-  static displayName = 'ReactSpeedometer';
+    static displayName = 'ReactSpeedometer';
 
-  constructor(props) {
-    super(props);
+    constructor(props) {
+      super(props);
 
     // list of d3 refs to share within the components
-    this._d3_refs = {
-      powerGauge: false
+      this._d3_refs = {
+        powerGauge: false
     };
 
     // the initial value is 0;
     // on subsequent renders we will update the initial value with previous value for animating
-    this.initialValue = 0;
+      this.initialValue = 0;
   }
 
-  componentWillMount() {}
+    componentWillMount() {}
 
-  componentDidMount() {
+    componentDidMount() {
     // render the gauge here
-    this.renderGauge();
+      this.renderGauge();
   }
 
-  render = () => {
-    return <div ref={ref => (this.gaugeDiv = ref)} />;
+    render = () => {
+      return <div style={{ flex: 1 }} ref={ref => (this.gaugeDiv = ref)} />;
   };
 
-  componentWillReceiveProps(newProps) {
+    componentWillReceiveProps(newProps) {
     // update the initial value
-    this.initialValue = this.props.value || 0;
+      this.initialValue = this.props.value || 0;
     //   console.log(newProps);
   }
 
-  shouldComponentUpdate(new_props) {
-    return true;
+    shouldComponentUpdate(new_props) {
+      return true;
     // NOTE: following logic for 'stopRerender'
     // update the props
-    this.props = new_props;
+      this.props = new_props;
     // just update our readings
-    this.updateReadings();
+      this.updateReadings();
     // DO NOT UPDATE THE WHOLE COMPONENT
-    return false;
+      return false;
   }
 
-  componentWillUpdate() {}
+    componentWillUpdate() {}
 
-  componentDidUpdate() {
+    componentDidUpdate() {
     // on update, check if 'forceRender' option is present;
-    if (this.props.forceRender) {
-      this.renderGauge();
+      if (this.props.forceRender) {
+        this.renderGauge();
     } else {
       // let us just animate the value of the speedometer
-      this.updateReadings();
+        this.updateReadings();
     }
   }
 
-  getGauge() {
-    var self = this; // save reference
+    getGauge() {
+      var self = this; // save reference
 
-    var PROPS = this.props;
+      var PROPS = this.props;
 
     // main gauge function;
     // takes a container inside which we will display the speedometer
     // here container is our gaugeDiv ref
     // return function (container) {
-    return container => {
+      return container => {
       // default config that are 'not' configurable
-      var default_config = {
-        ringInset: 20,
+        var default_config = {
+          ringInset: 20,
 
-        pointerWidth: 10,
-        pointerTailLength: 5,
-        pointerHeadLengthPercent: 0.9,
+          pointerWidth: 10,
+          pointerTailLength: 5,
+          pointerHeadLengthPercent: 0.9,
 
-        minAngle: -90,
-        maxAngle: 90,
+          minAngle: -90,
+          maxAngle: 90,
 
-        labelInset: 10,
+          labelInset: 10,
 
         // calculate the ReactSpeedometer 'parentNode' width/height; it might be used if fluidWidth: true
-        parentWidth: self.gaugeDiv.parentNode.clientWidth,
-        parentHeight: self.gaugeDiv.parentNode.clientHeight
+          parentWidth: self.gaugeDiv.parentNode.clientWidth,
+          parentHeight: self.gaugeDiv.parentNode.clientHeight
       };
 
       // START: Configurable values
-      var config = {
+        var config = {
         // width/height config
         // if fluidWidth; width/height taken from the parent of the ReactSpeedometer
         // else if width/height given it is used; else our default
-        width: PROPS.fluidWidth ? default_config.parentWidth : PROPS.width,
-        height: PROPS.fluidWidth ? default_config.parentHeight : PROPS.height,
+          width: PROPS.fluidWidth ? default_config.parentWidth : PROPS.width,
+          height: PROPS.fluidWidth ? default_config.parentHeight : PROPS.height,
         // ring width should be 1/4 th of width
-        ringWidth: PROPS.ringWidth,
+          ringWidth: PROPS.ringWidth,
         // min/max values
-        minValue: PROPS.minValue,
-        maxValue: PROPS.maxValue,
+          minValue: PROPS.minValue,
+          maxValue: PROPS.maxValue,
         // color of the speedometer needle
-        needleColor: PROPS.needleColor,
+          needleColor: PROPS.needleColor,
         // segments in the speedometer
-        majorTicks: PROPS.segments,
+          majorTicks: PROPS.segments,
         // color range for the segments
-        arcColorFn: d3InterpolateHsl(
+          arcColorFn: d3InterpolateHsl(
           d3Rgb(PROPS.startColor),
           d3Rgb(PROPS.endColor)
         ),
         // needle configuration
-        needleTransition: PROPS.needleTransition,
-        needleTransitionDuration: PROPS.needleTransitionDuration,
+          needleTransition: PROPS.needleTransition,
+          needleTransitionDuration: PROPS.needleTransitionDuration,
         // text color
-        textColor: PROPS.textColor,
+          textColor: PROPS.textColor,
         // label format
-        labelFormat: d3Format(PROPS.valueFormat),
+          labelFormat: d3Format(PROPS.valueFormat),
         // value text string (template string)
-        currentValueText: PROPS.currentValueText
+          currentValueText: PROPS.currentValueText
       };
       // END: Configurable values
 
       // merge default config with the config
-      config = Object.assign({}, default_config, config);
+        config = Object.assign({}, default_config, config);
 
-      var range = undefined,
-        r = undefined,
-        pointerHeadLength = undefined,
-        value = 0,
-        svg = undefined,
-        arc = undefined,
-        scale = undefined,
-        ticks = undefined,
-        tickData = undefined;
+        var range = undefined,
+          r = undefined,
+          pointerHeadLength = undefined,
+          value = 0,
+          svg = undefined,
+          arc = undefined,
+          scale = undefined,
+          ticks = undefined,
+          tickData = undefined;
 
       // var donut = d3.pie();
-      var donut = d3Pie();
+        var donut = d3Pie();
 
-      function deg2rad(deg) {
-        return (deg * Math.PI) / 180;
+        function deg2rad(deg) {
+          return (deg * Math.PI) / 180;
       }
 
-      function newAngle(d) {
-        var ratio = scale(d);
-        var newAngle = config.minAngle + ratio * range;
+        function newAngle(d) {
+          var ratio = scale(d);
+          var newAngle = config.minAngle + ratio * range;
 
-        return newAngle;
+          return newAngle;
       }
 
-      function configure() {
+        function configure() {
         // merge the config with incoming (optional) configuration
         // config = Object.assign( {}, config, configuration );
 
-        range = config.maxAngle - config.minAngle;
+          range = config.maxAngle - config.minAngle;
         // r = config.size / 2;
-        r = config.width / 2;
-        pointerHeadLength = Math.round(r * config.pointerHeadLengthPercent);
+          r = config.width / 2;
+          pointerHeadLength = Math.round(r * config.pointerHeadLengthPercent);
 
         // a linear scale that maps domain values to a percent from 0..1
         // scale = d3.scaleLinear()
-        scale = d3ScaleLinear()
+          scale = d3ScaleLinear()
           .range([0, 1])
           .domain([config.minValue, config.maxValue]);
 
-        ticks = scale.ticks(config.majorTicks);
+          ticks = scale.ticks(config.majorTicks);
         // tickData = d3.range(config.majorTicks)
-        tickData = d3Range(config.majorTicks).map(function() {
-          return 1 / config.majorTicks;
+          tickData = d3Range(config.majorTicks).map(function() {
+            return 1 / config.majorTicks;
         });
 
         // arc = d3.svg.arc()
         // arc = d3.arc()
-        arc = d3Arc()
+          arc = d3Arc()
           .innerRadius(r - config.ringWidth - config.ringInset)
           .outerRadius(r - config.ringInset)
           .startAngle(function(d, i) {
-            var ratio = d * i;
-            return deg2rad(config.minAngle + ratio * range);
+              var ratio = d * i;
+              return deg2rad(config.minAngle + ratio * range);
           })
           .endAngle(function(d, i) {
-            var ratio = d * (i + 1);
-            return deg2rad(config.minAngle + ratio * range);
+              var ratio = d * (i + 1);
+              return deg2rad(config.minAngle + ratio * range);
           });
       }
 
-      function centerTranslation() {
-        return 'translate(' + r + ',' + r + ')';
+        function centerTranslation() {
+          return 'translate(' + r + ',' + r + ')';
       }
 
-      function isRendered() {
-        return svg !== undefined;
+        function isRendered() {
+          return svg !== undefined;
       }
 
-      function render(newValue) {
+        function render(newValue) {
         // svg = d3.select(container)
-        svg = d3Select(container)
+          svg = d3Select(container)
           .append('svg:svg')
           // .attr('class', 'gauge')
           // adding class 'speedometer' for the main svg holder
@@ -245,13 +245,13 @@ class ReactSpeedometer extends React.Component {
           .attr('width', config.width)
           .attr('height', config.height);
 
-        var svgDefs = svg.append('defs');
+          var svgDefs = svg.append('defs');
 
-        var mainGradient = svgDefs
+          var mainGradient = svgDefs
           .append('linearGradient')
           .attr('id', 'mainGradient');
 
-        mainGradient
+          mainGradient
           .append('stop')
           .style('stop-color', 'rgba(57, 198, 237, 1)')
           .attr('offset', '0');
@@ -260,19 +260,19 @@ class ReactSpeedometer extends React.Component {
         //   .style('stop-color', 'yellow')
         //   .attr('offset', '0.5');
 
-        mainGradient
+          mainGradient
           .append('stop')
           .style('stop-color', 'rgba(57, 20, 115, 1)')
           .attr('offset', '1');
 
-        var centerTx = centerTranslation();
+          var centerTx = centerTranslation();
 
-        var arcs = svg
+          var arcs = svg
           .append('g')
           .attr('class', 'arc')
           .attr('transform', centerTx);
 
-        arcs
+          arcs
           .selectAll('path')
           .data([1])
           .enter()
@@ -280,19 +280,19 @@ class ReactSpeedometer extends React.Component {
           .style('fill', 'url(#mainGradient)')
           .attr('d', arc);
 
-        var lg = svg
+          var lg = svg
           .append('g')
           .attr('class', 'label')
           .attr('transform', centerTx);
 
-        lg.selectAll('text')
+          lg.selectAll('text')
           .data([])
           .enter()
           .append('text')
           .attr('transform', function(d) {
-            var ratio = scale(d);
-            var newAngle = config.minAngle + ratio * range;
-            return (
+              var ratio = scale(d);
+              var newAngle = config.minAngle + ratio * range;
+              return (
               'rotate(' +
               newAngle +
               ') translate(0,' +
@@ -311,7 +311,7 @@ class ReactSpeedometer extends React.Component {
           .style('fill', config.textColor);
 
         // save current value reference
-        self._d3_refs.current_value_text = svg
+          self._d3_refs.current_value_text = svg
           .append('g')
           .attr(
             'transform',
@@ -330,7 +330,7 @@ class ReactSpeedometer extends React.Component {
           // .style("fill", "#666");
           .style('fill', config.textColor);
 
-        var lineData = [
+          var lineData = [
           [config.pointerWidth / 2, 0],
           [0, -pointerHeadLength],
           [-(config.pointerWidth / 2), 0],
@@ -340,11 +340,11 @@ class ReactSpeedometer extends React.Component {
 
         // var pointerLine = d3.svg.line().interpolate('monotone');
         // var pointerLine = d3.line()
-        var pointerLine = d3Line()
+          var pointerLine = d3Line()
           // .curve( d3.curveMonotoneX );
           .curve(d3CurveMonotoneX);
 
-        var pg = svg
+          var pg = svg
           .append('g')
           .data([lineData])
           .attr('class', 'pointer')
@@ -352,40 +352,40 @@ class ReactSpeedometer extends React.Component {
           .style('fill', 'rgba(255, 0, 59, 1)' || config.needleColor);
         // .style("stroke", "green");
 
-        self._d3_refs.pointer = pg
+          self._d3_refs.pointer = pg
           .append('path')
           .attr('d', pointerLine)
           .attr('transform', 'rotate(' + config.minAngle + ')');
 
-        update(newValue === undefined ? 0 : newValue);
+          update(newValue === undefined ? 0 : newValue);
       }
 
       // formats current value
       // ref: https://stackoverflow.com/a/29771751/1410291
-      function formatCurrentValueText(currentValue) {
-        let value = config.labelFormat(currentValue);
+        function formatCurrentValueText(currentValue) {
+          let value = config.labelFormat(currentValue);
         // simply replace ${value} with value to support IE9/10/11
-        return config.currentValueText.replace('${value}', value);
+          return config.currentValueText.replace('${value}', value);
 
         // NOTE: not using template string to support IE 9/10/11
         // ref: https://caniuse.com/#feat=template-literals
 
         // if needed, maybe we can later add some polyfill support
         // ref: https://stackoverflow.com/a/29771751/1410291
-        function assemble(literal, params) {
+          function assemble(literal, params) {
           // ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function
-          return new Function(params, 'return `' + literal + '`;');
+            return new Function(params, 'return `' + literal + '`;');
         }
-        var template = assemble(config.currentValueText, 'value');
-        return template(value);
+          var template = assemble(config.currentValueText, 'value');
+          return template(value);
       }
 
-      function update(newValue) {
-        var ratio = scale(newValue);
+        function update(newValue) {
+          var ratio = scale(newValue);
 
-        var newAngle = config.minAngle + ratio * range;
+          var newAngle = config.minAngle + ratio * range;
         // update the pointer
-        self._d3_refs.pointer
+          self._d3_refs.pointer
           .transition()
           .duration(config.needleTransitionDuration)
           // .ease( d3EaseLinear )
@@ -394,178 +394,178 @@ class ReactSpeedometer extends React.Component {
           .attr('transform', 'rotate(' + newAngle + ')');
         // update the current value
         // self._d3_refs.current_value_text.text( config.labelFormat( newValue ) );
-        self._d3_refs.current_value_text.text(formatCurrentValueText(newValue));
+          self._d3_refs.current_value_text.text(formatCurrentValueText(newValue));
       }
 
       // configure for first time !?
-      configure();
+        configure();
 
       // return a object with all our functions;
       // also expose the 'config' object; for now, we will update the 'labelFormat' while updating
-      return {
-        configure: configure,
-        isRendered: isRendered,
-        render: render,
-        update: update,
+        return {
+          configure: configure,
+          isRendered: isRendered,
+          render: render,
+          update: update,
         // exposing the config object
-        config: config
+          config: config
       };
     };
   }
 
-  renderGauge() {
-    console.log('rendering gauge ');
+    renderGauge() {
+      console.log('rendering gauge ');
     // before rendering remove the existing gauge?
     // d3.select( this.gaugeDiv )
-    d3Select(this.gaugeDiv)
+      d3Select(this.gaugeDiv)
       .select('svg')
       .remove();
     // store the gauge in our d3_refs
-    this._d3_refs.powerGauge = this.getGauge()(this.gaugeDiv);
+      this._d3_refs.powerGauge = this.getGauge()(this.gaugeDiv);
     // render for first time; no value means initializes with 0
-    this._d3_refs.powerGauge.render(this.initialValue);
+      this._d3_refs.powerGauge.render(this.initialValue);
     // update readings for the first time
-    this.updateReadings();
+      this.updateReadings();
   }
 
-  updateReadings() {
+    updateReadings() {
     // refresh the config of 'labelFormat'
-    this._d3_refs.powerGauge.config.labelFormat = d3Format(
+      this._d3_refs.powerGauge.config.labelFormat = d3Format(
       this.props.valueFormat || ''
     );
     // refresh the current value text
-    this._d3_refs.powerGauge.config.currentValueText =
+      this._d3_refs.powerGauge.config.currentValueText =
       this.props.currentValueText || '${value}';
     // updates the readings of the gauge with the current prop value
     // animates between old prop value and current prop value
-    this._d3_refs.powerGauge.update(this.props.value || 0);
+      this._d3_refs.powerGauge.update(this.props.value || 0);
   }
 
   // takes a 'transition string' and returns a d3 transition method
   // default is easeLinear
-  getTransitionMethod(transition) {
-    switch (transition) {
+    getTransitionMethod(transition) {
+      switch (transition) {
       // ease linear
-      case 'easeLinear':
-        return d3EaseLinear;
-        break;
+        case 'easeLinear':
+            return d3EaseLinear;
+            break;
       // easeQuadIn as d3EaseQuadIn,
-      case 'easeQuadIn':
-        return d3EaseQuadIn;
-        break;
+        case 'easeQuadIn':
+            return d3EaseQuadIn;
+            break;
       // easeQuadOut as d3EaseQuadOut
-      case 'easeQuadOut':
-        return d3EaseQuadOut;
-        break;
+        case 'easeQuadOut':
+            return d3EaseQuadOut;
+            break;
       // easeQuadInOut as d3EaseQuadInOut
-      case 'easeQuadInOut':
-        return d3EaseQuadInOut;
-        break;
+        case 'easeQuadInOut':
+            return d3EaseQuadInOut;
+            break;
       // easeCubicIn as d3EaseCubicIn
-      case 'easeCubicIn':
-        return d3EaseCubicIn;
-        break;
+        case 'easeCubicIn':
+            return d3EaseCubicIn;
+            break;
       // easeCubicOut as d3EaseCubicOut,
-      case 'easeCubicOut':
-        return d3EaseCubicOut;
-        break;
+        case 'easeCubicOut':
+            return d3EaseCubicOut;
+            break;
       // easeCubicInOut as d3EaseCubicInOut,
-      case 'easeCubicInOut':
-        return d3EaseCubicInOut;
-        break;
+        case 'easeCubicInOut':
+            return d3EaseCubicInOut;
+            break;
       // easePolyIn as d3EasePolyIn,
-      case 'easePolyIn':
-        return d3EasePolyIn;
-        break;
+        case 'easePolyIn':
+            return d3EasePolyIn;
+            break;
       // easePolyOut as d3EasePolyOut,
-      case 'easePolyOut':
-        return d3EasePolyOut;
-        break;
+        case 'easePolyOut':
+            return d3EasePolyOut;
+            break;
       // easePolyInOut as d3EasePolyInOut,
-      case 'easePolyInOut':
-        return d3EasePolyInOut;
-        break;
+        case 'easePolyInOut':
+            return d3EasePolyInOut;
+            break;
       // easeSinIn as d3EaseSinIn,
-      case 'easeSinIn':
-        return d3EaseSinIn;
-        break;
+        case 'easeSinIn':
+            return d3EaseSinIn;
+            break;
       // easeSinOut as d3EaseSinOut,
-      case 'easeSinOut':
-        return d3EaseSinOut;
-        break;
+        case 'easeSinOut':
+            return d3EaseSinOut;
+            break;
       // easeSinInOut as d3EaseSinInOut,
-      case 'easeSinInOut':
-        return d3EaseSinInOut;
-        break;
+        case 'easeSinInOut':
+            return d3EaseSinInOut;
+            break;
       // easeExpIn as d3EaseExpIn,
-      case 'easeExpIn':
-        return d3EaseExpIn;
-        break;
+        case 'easeExpIn':
+            return d3EaseExpIn;
+            break;
       // easeExpOut as d3EaseExpOut,
-      case 'easeExpOut':
-        return d3EaseExpOut;
-        break;
+        case 'easeExpOut':
+            return d3EaseExpOut;
+            break;
       // easeExpInOut as d3EaseExpInOut,
-      case 'easeExpInOut':
-        return d3EaseExpInOut;
-        break;
+        case 'easeExpInOut':
+            return d3EaseExpInOut;
+            break;
       // easeCircleIn as d3EaseCircleIn,
-      case 'easeCircleIn':
-        return d3EaseCircleIn;
-        break;
+        case 'easeCircleIn':
+            return d3EaseCircleIn;
+            break;
       // easeCircleOut as d3EaseCircleOut,
-      case 'easeCircleOut':
-        return d3EaseCircleOut;
-        break;
+        case 'easeCircleOut':
+            return d3EaseCircleOut;
+            break;
       // easeCircleInOut as d3EaseCircleInOut,
-      case 'easeCircleInOut':
-        return d3EaseCircleInOut;
-        break;
+        case 'easeCircleInOut':
+            return d3EaseCircleInOut;
+            break;
       // easeBounceIn as d3EaseBounceIn,
-      case 'easeBounceIn':
-        return d3EaseBounceIn;
-        break;
+        case 'easeBounceIn':
+            return d3EaseBounceIn;
+            break;
       // easeBounceOut as d3EaseBounceOut,
-      case 'easeBounceOut':
-        return d3EaseBounceOut;
-        break;
+        case 'easeBounceOut':
+            return d3EaseBounceOut;
+            break;
       // easeBounceInOut as d3EaseBounceInOut,
-      case 'easeBounceInOut':
-        return d3EaseBounceInOut;
-        break;
+        case 'easeBounceInOut':
+            return d3EaseBounceInOut;
+            break;
       // easeBackIn as d3EaseBackIn,
-      case 'easeBackIn':
-        return d3EaseBackIn;
-        break;
+        case 'easeBackIn':
+            return d3EaseBackIn;
+            break;
       // easeBackOut as d3EaseBackOut,
-      case 'easeBackOut':
-        return d3EaseBackOut;
-        break;
+        case 'easeBackOut':
+            return d3EaseBackOut;
+            break;
       // easeBackInOut as d3EaseBackInOut,
-      case 'easeBackInOut':
-        return d3EaseBackInOut;
-        break;
+        case 'easeBackInOut':
+            return d3EaseBackInOut;
+            break;
       // easeElasticIn as d3EaseElasticIn,
-      case 'easeElasticIn':
-        return d3EaseElasticIn;
-        break;
+        case 'easeElasticIn':
+            return d3EaseElasticIn;
+            break;
       // easeElasticOut as d3EaseElasticOut,
-      case 'easeElasticOut':
-        return d3EaseElasticOut;
-        break;
+        case 'easeElasticOut':
+            return d3EaseElasticOut;
+            break;
       // easeElasticInOut as d3EaseElasticInOut,
-      case 'easeElasticInOut':
-        return d3EaseElasticInOut;
-        break;
+        case 'easeElasticInOut':
+            return d3EaseElasticInOut;
+            break;
       // easeElastic as d3EaseElastic,
-      case 'easeElastic':
-        return d3EaseElastic;
-        break;
+        case 'easeElastic':
+            return d3EaseElastic;
+            break;
 
       // ease elastic transition
-      case 'easeElastic':
-        return d3EaseElastic;
-        break;
+        case 'easeElastic':
+            return d3EaseElastic;
+            break;
     }
   }
 }
@@ -573,75 +573,75 @@ class ReactSpeedometer extends React.Component {
 // define the proptypes
 // make all the props and 'required' and provide sensible default in the 'defaultProps'
 ReactSpeedometer.propTypes = {
-  value: PropTypes.number.isRequired,
-  minValue: PropTypes.number.isRequired,
-  maxValue: PropTypes.number.isRequired,
+    value: PropTypes.number.isRequired,
+    minValue: PropTypes.number.isRequired,
+    maxValue: PropTypes.number.isRequired,
 
   // tracks if the component should update as the whole or just animate the value
   // default will just animate the value after initialization/mounting
-  forceRender: PropTypes.bool.isRequired,
+    forceRender: PropTypes.bool.isRequired,
 
-  width: PropTypes.number.isRequired,
-  height: PropTypes.number.isRequired,
-  fluidWidth: PropTypes.bool.isRequired,
+    width: PropTypes.number.isRequired,
+    height: PropTypes.number.isRequired,
+    fluidWidth: PropTypes.bool.isRequired,
 
   // segments to show in the speedometer
-  segments: PropTypes.number.isRequired,
+    segments: PropTypes.number.isRequired,
 
   // color strings
-  needleColor: PropTypes.string.isRequired,
-  startColor: PropTypes.string.isRequired,
-  endColor: PropTypes.string.isRequired,
+    needleColor: PropTypes.string.isRequired,
+    startColor: PropTypes.string.isRequired,
+    endColor: PropTypes.string.isRequired,
 
   // needle transition type and duration
-  needleTransition: PropTypes.string.isRequired,
-  needleTransitionDuration: PropTypes.number.isRequired,
+    needleTransition: PropTypes.string.isRequired,
+    needleTransitionDuration: PropTypes.number.isRequired,
 
-  ringWidth: PropTypes.number.isRequired,
-  textColor: PropTypes.string.isRequired,
+    ringWidth: PropTypes.number.isRequired,
+    textColor: PropTypes.string.isRequired,
 
   // d3 format identifier is generally a string; default "" (empty string)
-  valueFormat: PropTypes.string.isRequired,
+    valueFormat: PropTypes.string.isRequired,
   // value text format
-  currentValueText: PropTypes.string.isRequired
+    currentValueText: PropTypes.string.isRequired
 };
 
 // define the default proptypes
 ReactSpeedometer.defaultProps = {
-  value: 0,
-  minValue: 0,
-  maxValue: 1000,
+    value: 0,
+    minValue: 0,
+    maxValue: 1000,
 
-  forceRender: false,
+    forceRender: false,
 
-  width: 300,
-  height: 300,
-  fluidWidth: false,
+    width: 300,
+    height: 300,
+    fluidWidth: false,
 
   // segments to show in the speedometer
-  segments: 5,
+    segments: 5,
 
   // color strings
-  needleColor: 'steelblue',
-  startColor: '#FF471A',
-  endColor: '#33CC33',
+    needleColor: 'steelblue',
+    startColor: '#FF471A',
+    endColor: '#33CC33',
 
   // needle transition type and duration
-  needleTransition: 'easeQuadInOut',
-  needleTransitionDuration: 500,
+    needleTransition: 'easeQuadInOut',
+    needleTransitionDuration: 500,
 
-  ringWidth: 60,
+    ringWidth: 60,
 
   // text color (for both showing current value and segment values)
-  textColor: '#666',
+    textColor: '#666',
 
   // label format => https://github.com/d3/d3-format
   // by default ""; takes valid input for d3 format
-  valueFormat: '',
+    valueFormat: '',
 
   // value text string format; by default it just shows the value
   // takes es6 template string as input with a default ${value}
-  currentValueText: '${value}'
+    currentValueText: '${value}'
 };
 
 export default ReactSpeedometer;
