@@ -74,9 +74,10 @@ class ReactSpeedometer extends React.Component {
       return <div ref={ref => (this.gaugeDiv = ref)} />;
   };
 
-    componentWillReceiveProps() {
+    componentWillReceiveProps(newProps) {
     // update the initial value
       this.initialValue = this.props.value || 0;
+      console.log(newProps);
   }
 
     shouldComponentUpdate(new_props) {
